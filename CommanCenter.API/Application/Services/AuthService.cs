@@ -62,10 +62,10 @@ public class AuthService : IAuthService
         });
     }
 
-    public async Task<ApiResponse<TokenResponseDto>> RefreshTokenAsync(string refreshToken)
+    public Task<ApiResponse<TokenResponseDto>> RefreshTokenAsync(string refreshToken)
     {
         // Implementación básica — en producción validar contra DB
-        return ApiResponse<TokenResponseDto>.Fail("RefreshToken no implementado aún.");
+        return Task.FromResult(ApiResponse<TokenResponseDto>.Fail("RefreshToken no implementado aún."));
     }
 
     public async Task<ApiResponse<bool>> LogoutAsync(string usuarioId)

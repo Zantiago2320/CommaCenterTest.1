@@ -7,6 +7,7 @@ using CommanCenter.API.Infrastructure.Data;
 using CommanCenter.API.Infrastructure.Jobs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace CommanCenter.API.Controllers;
 
@@ -231,9 +232,10 @@ public class NotificationsController : ControllerBase
     [HttpGet("{destinatario}")]
     public async Task<IActionResult> GetByDestinatario(string destinatario)
     {
-        var lista = _db.Notificaciones
+        var lista = (await _db.Notificaciones
             .Where(n => n.Destinatario == destinatario)
             .OrderByDescending(n => n.FechaCreacion)
+            .ToListAsync())
             .Select(n => new NotificacionDto
             {
                 Id = n.Id.ToString(),
