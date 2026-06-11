@@ -52,6 +52,7 @@ try
 
     await db.Database.MigrateAsync();
     await SeedAsync(roleManager, userManager);
+    await SeedCelulasAsync(db);
 }
 catch (Exception ex)
 {
@@ -127,6 +128,47 @@ static async Task SeedAsync(RoleManager<IdentityRole> roleManager, UserManager<I
     await CrearUsuarioAsync(userManager, "alexander", "Alexander@123", "Supervisor");
     await CrearUsuarioAsync(userManager, "sergio", "Sergio@123", "Supervisor");
     await CrearUsuarioAsync(userManager, "senior", "Senior@123", "Senior");
+}
+
+// Crea las células base del equipo si aún no existen (solo faltan asignar consultores).
+static async Task SeedCelulasAsync(AppDbContext db)
+{
+    string[] celulas =
+    [
+        "Administrativo",
+        "Aurora",
+        "Bon Voyage",
+        "Data Stargazers",
+        "DEVSECOPS",
+        "Dirección Desarrollo",
+        "Enterprise Team",
+        "Facturador",
+        "Maya",
+        "MindShift",
+        "Nova",
+        "Polaris Software Team",
+        "Seguridad",
+        "Sin asignación",
+        "Transversal Calidad",
+        "Wakanda"
+    ];
+
+    var existentes = await db.Celulas
+        .Select(c => c.Nombre)
+        .ToListAsync();
+
+    var nuevas = celulas
+        .Where(nombre => !existentes.Contains(nombre))
+        .Select(nombre => new CommanCenter.API.Domain.Entities.Celula { Nombre = nombre })
+        .ToList();
+
+    if (nuevas.Count > 0)
+    {
+        await db.Celulas.AddRangeAsync(nuevas);
+        await db.SaveChangesAsync();
+        Log.Information("✅ Células creadas: {Cantidad} ({Nombres})",
+            nuevas.Count, string.Join(", ", nuevas.Select(c => c.Nombre)));
+    }
 }
 
 // Crea un usuario por nombre (sin correo) y le asigna un rol, si no existe.
