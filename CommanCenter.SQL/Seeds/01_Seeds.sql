@@ -27,18 +27,37 @@ GO
 -- ============================================================
 -- CommanCenter.SQL / Seeds / 02_CelulasBase.sql
 -- Células iniciales del módulo DataTeam
+-- (Solo falta asignar consultores a cada una.)
+-- Idempotente: cada célula se inserta solo si no existe.
 -- ============================================================
 
-IF NOT EXISTS (SELECT 1 FROM [dbo].[Celulas] WHERE [Nombre] = 'Célula Backend')
-BEGIN
-	INSERT INTO [dbo].[Celulas] ([Nombre], [Descripcion], [Color], [Activo], [FechaCreacion])
-	VALUES
-		('Célula Backend',  'Equipo de desarrollo backend .NET',     '#0d6efd', 1, GETUTCDATE()),
-		('Célula Frontend', 'Equipo de desarrollo frontend React',   '#198754', 1, GETUTCDATE()),
-		('Célula DevOps',   'Equipo de infraestructura y pipelines', '#dc3545', 1, GETUTCDATE()),
-		('Célula QA',       'Equipo de calidad y testing',           '#ffc107', 1, GETUTCDATE()),
-		('Célula Data',     'Equipo de datos y analítica',           '#6f42c1', 1, GETUTCDATE());
+;WITH Base AS (
+    SELECT Nombre FROM (VALUES
+        ('Administrativo'),
+        ('Aurora'),
+        ('Bon Voyage'),
+        ('Data Stargazers'),
+        ('DEVSECOPS'),
+        ('Dirección Desarrollo'),
+        ('Enterprise Team'),
+        ('Facturador'),
+        ('Maya'),
+        ('MindShift'),
+        ('Nova'),
+        ('Polaris Software Team'),
+        ('Seguridad'),
+        ('Sin asignación'),
+        ('Transversal Calidad'),
+        ('Wakanda')
+    ) AS C(Nombre)
+)
+INSERT INTO [dbo].[Celulas] ([Nombre], [Color], [Activo], [FechaCreacion])
+SELECT b.Nombre, '#28a745', 1, GETUTCDATE()
+FROM Base b
+WHERE NOT EXISTS (
+    SELECT 1 FROM [dbo].[Celulas] c WHERE c.[Nombre] = b.Nombre
+);
 
-	PRINT '✅ Células base insertadas.';
-END
+PRINT '✅ Células base insertadas/verificadas (16).';
 GO
+

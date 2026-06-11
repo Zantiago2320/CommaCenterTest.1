@@ -138,6 +138,9 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
+        // Acceso al HttpContext (para capturar IP, UserAgent y usuario en la auditoría)
+        services.AddHttpContextAccessor();
+
         // Repositories
         services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
         services.AddScoped<IConsultorRepository, ConsultorRepository>();

@@ -1,13 +1,21 @@
-﻿using CommanCenter.API.Domain.Entities;
+﻿using System.Security.Claims;
+using CommanCenter.API.Domain.Entities;
 using CommanCenter.API.Domain.Interfaces;
 using CommanCenter.API.Infrastructure.Data;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
 namespace CommanCenter.API.Infrastructure.Repositories;
 
 public class AuditoriaRepository : Repository<AuditoriaLog>, IAuditoriaRepository
 {
-    public AuditoriaRepository(AppDbContext context) : base(context) { }
+    private readonly IHttpContextAccessor _httpContextAccessor;
+
+    public AuditoriaRepository(AppDbContext context, IHttpContextAccessor httpContextAccessor)
+        : base(context)
+    {
+        _httpContextAccessor = httpContextAccessor;
+    }
 
     public async Task<IEnumerable<AuditoriaLog>> GetByModuloAsync(string modulo) =>
         await _context.AuditoriaLogs
@@ -38,6 +46,21 @@ public class AuditoriaRepository : Repository<AuditoriaLog>, IAuditoriaRepositor
         string? usuarioId, string? usuarioEmail, string? ip,
         bool exitoso = true, string? error = null)
     {
+        var http = _httpContextAccessor.HttpContext;
+        var usuario = http?.User;
+
+        // Si no llega información explícita, la tomo del contexto de la petición.
+        usuarioId ??= usuario?.FindFirstValue(ClaimTypes.Name)
+            ?? usuario?.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? "system";
+
+        usuarioEmail ??= usuario?.FindFirstValue(ClaimTypes.Email)
+            ?? usuario?.FindFirstValue("email")
+            ?? usuarioId;
+
+        ip ??= http?.Connection?.RemoteIpAddress?.ToString();
+        var userAgent = http?.Request?.Headers["User-Agent"].ToString();
+
         var log = new AuditoriaLog
         {
             Modulo = modulo,
@@ -48,7 +71,8 @@ public class AuditoriaRepository : Repository<AuditoriaLog>, IAuditoriaRepositor
             ValorNuevo = valorNuevo,
             UsuarioId = usuarioId,
             UsuarioEmail = usuarioEmail,
-            IpAddress = ip,
+            IpAddress = string.IsNullOrWhiteSpace(ip) ? "desconocida" : ip,
+            UserAgent = string.IsNullOrWhiteSpace(userAgent) ? "desconocido" : userAgent,
             Exitoso = exitoso,
             MensajeError = error,
             FechaCreacion = DateTime.UtcNow
